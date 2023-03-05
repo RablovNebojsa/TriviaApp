@@ -9,7 +9,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textSize="26sp"
-        android:layout_margin="5dp"
+        android:background="@drawable/question_item_border"
+        android:padding="5dp"
         android:maxLines="1"
         android:ellipsize="end"/>
 
