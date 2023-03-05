@@ -1,11 +1,14 @@
 package com.example.triviaapp;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Toast;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import retrofit2.Call;
@@ -21,6 +24,8 @@ public class QuestionListActivity extends AppCompatActivity {
     public static final Integer AMOUNT = 20;
 
     private TriviaApi mTriviaApi;
+    private QuestionListAdapter mListAdapter;
+    private RecyclerView mListRecyclerView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,6 +37,9 @@ public class QuestionListActivity extends AppCompatActivity {
                 .addConverterFactory(GsonConverterFactory.create())
                 .build()
                 .create(TriviaApi.class);
+        mListRecyclerView = findViewById(R.id.QuestionListRecyclerView);
+        mListRecyclerView.setHasFixedSize(true);
+        mListRecyclerView.setLayoutManager(new LinearLayoutManager(this));
     }
 
     @Override
@@ -65,10 +73,18 @@ public class QuestionListActivity extends AppCompatActivity {
     }
 
     private void bindQuestions(List<QuestionSchema> results) {
+        List<Question> questionList = new ArrayList<Question>();
         for (QuestionSchema questionSchema : results){
-            Log.d(LOG_TAG,"Response: " + questionSchema.getCategory() + " " +
-                    questionSchema.getCorrectAnswer() + " " +
-                    questionSchema.getQuestion());
+            Question question = new Question(
+                    questionSchema.getCategory(),
+                    questionSchema.getType(),
+                    questionSchema.getDifficulty(),
+                    questionSchema.getQuestion(),
+                    questionSchema.getCorrectAnswer(),
+                    questionSchema.getIncorrectAnswers());
+            questionList.add(question);
         }
+        mListAdapter = new QuestionListAdapter(questionList);
+        mListRecyclerView.setAdapter(mListAdapter);
     }
 }
