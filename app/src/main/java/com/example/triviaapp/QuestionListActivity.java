@@ -1,11 +1,10 @@
 package com.example.triviaapp;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -17,35 +16,41 @@ import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
-public class QuestionListActivity extends AppCompatActivity {
-
-    private static final String LOG_TAG = QuestionListActivity.class.getName();
+public class QuestionListActivity extends AppCompatActivity implements QuestionListViewMvcImpl.Listener{
+    private static final String LOG_TAG = QuestionListActivity.class.getSimpleName();
     public static final String BASE_URL = "https://opentdb.com/";
     public static final Integer AMOUNT = 20;
 
     private TriviaApi mTriviaApi;
-    private QuestionListAdapter mListAdapter;
-    private RecyclerView mListRecyclerView;
+
+    private QuestionListViewMvc mQuestionListViewMvc;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.layout_question_list);
+
+        mQuestionListViewMvc = new QuestionListViewMvcImpl(LayoutInflater.from(this),null);
+        mQuestionListViewMvc.registerListener(this);
 
         mTriviaApi = new Retrofit.Builder()
                 .baseUrl(BASE_URL)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build()
                 .create(TriviaApi.class);
-        mListRecyclerView = findViewById(R.id.QuestionListRecyclerView);
-        mListRecyclerView.setHasFixedSize(true);
-        mListRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+        setContentView(mQuestionListViewMvc.getRootView());
     }
 
     @Override
     protected void onStart() {
         super.onStart();
         fetchQuestions();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        mQuestionListViewMvc.unregisterListener(this);
     }
 
     private void fetchQuestions() {
@@ -75,6 +80,7 @@ public class QuestionListActivity extends AppCompatActivity {
     private void bindQuestions(List<QuestionSchema> results) {
         List<Question> questionList = new ArrayList<Question>();
         for (QuestionSchema questionSchema : results){
+            Log.d(LOG_TAG, questionSchema.getQuestion());
             Question question = new Question(
                     questionSchema.getCategory(),
                     questionSchema.getType(),
@@ -84,7 +90,12 @@ public class QuestionListActivity extends AppCompatActivity {
                     questionSchema.getIncorrectAnswers());
             questionList.add(question);
         }
-        mListAdapter = new QuestionListAdapter(questionList);
-        mListRecyclerView.setAdapter(mListAdapter);
+        mQuestionListViewMvc.bindQuestions(questionList);
+    }
+
+    @Override
+    public void onQuestionClicked(Question question) {
+        Toast.makeText(this,"Correct answer is " + question.getCorrect_answer(), Toast.LENGTH_LONG)
+                .show();
     }
 }
